@@ -172,3 +172,34 @@ for test_case in test_cases:
 print('\n\n\n')
 for i, new_expected in enumerate(new_expecteds):
 	print(f'{new_expected}')
+
+# ['echo', 'Hello', 'World']
+# ['echo', 'Hello  World']
+# ['echo', "Hello' World"]
+# ['echo', 'Hello', 'World"']
+# ['echo', 'Hello"', 'World']
+# ['echo', 'HelloWorld']
+# ['echo', 'HelloWorld']
+# ['echo', 'HelloWorldstuck']
+# ['ec', "ho  'Hello  World'", 'x']
+# ["''"]
+# ["a'123'456"]
+# ["'123'456"]
+# ["'"]
+# ['']
+# ['']
+# ['"']
+# ["'"]
+# ["no clue of ''what other test   to", "do'"]
+# ['echo', 'hi', '|', 'cat', '-e']
+# ['echo', 'hi', '|', 'cat', '-e']
+# ['echo', 'hi|cat', '-e']
+# ['echo', 'hi|cat', '-e']
+# ['echo Hello World']
+# ['export', 'VAR=echo hi | cat']
+
+print('\n\n\n')
+for test_case in test_cases:
+	empty_list = []
+	empty_list.append(test_case["test_case"])
+	print(f'{empty_list}')
