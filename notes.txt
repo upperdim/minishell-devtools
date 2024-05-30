@@ -1,0 +1,152 @@
+Eval sheet
+	Compile w/ -Wall -Wextra -Werror flags
+	Makefile must not re-link
+
+	Exec simple cmd w/ absolute path like /bin/ls
+	How many globals are used? Why?
+	Global var cannot provide any other info or data access than num of received signal
+	Test empty command
+	Test only space/tab
+
+	Exec simple cmd w/ abs path w/ arguments but no quotes/double quotes (repeat w/ different cmds args)
+		then exec echo $?
+		try some wrong commands like '/bin/ls fileThatDoesntExist'
+		try anything like expr $? + $?
+
+	exec echo cmd w/ and wo/ args or -n option (repeat w/ different args)
+	exec exit cmd w/ and wo/ args or -n option (repeat w/ different args)
+
+	Signals
+		ctrl-C in       empty prompt should    display new line new prompt
+			Buffer should be empty too, press ENTER again to see if something happens
+		ctrl-C in a non empty prompt should    display a new line new prompt
+		ctrl-\ in       empty prompt shouldn't do anything
+		ctrl-\ in a non empty prompt shouldn't do anything
+		ctrl-D in       empty prompt should    quit minishell
+		ctrl-D in a non empty prompt shouldn't do anything
+		try ctrl-C after blocking command like cat wo/ args or grep "something"
+		try ctrl-\ after blocking command like cat wo/ args or grep "something"
+		try ctrl-D after blocking command like cat wo/ args or grep "something"
+		repeat multiple times using different commands
+
+	Double quotes
+		exec a simple cmd w/ args using double quotes (try including white spaces too)
+		try a cmd like echo "cat lol.c | cat > lol.c"
+		try anything except $
+
+	Single quotes
+		exec cmds w/ single quotes as args
+		try empty args
+		try env variables, whitespaces, pipes, redirection in the single quotes
+		echo '$USER' must print "$USER"
+?		nothing should be interpreted
+
+	check if env shows you the current environment variables
+	export env vars, create new ones and replace old ones, check result with env
+	use unset to remove env vars, check result with env
+	use the command cd to change directory, check the result with /bin/ls
+	check pwd in different directories
+	exec cmds with relative path
+	
+	Env path
+		exec cmds wo/ any path (ls, wc, awk, ...)
+		unset $PATH and ensure cmds are not working anymore
+		set $PATH to a multiple directory val (directory1:directory2) and ensure dirs are checked in order left to right
+
+	Redirections
+		exec cmds with < and >, repeat multiple times, diff cmds, change > with >>
+		check if multiple tries of the same redirections fail
+		test << redirection (it doesn't have to update the history)
+	
+	Pipes
+		Exec cmds w/ pipes like 'cat file | grep bla | more'
+		Repeat multiple times w/ diff cmds and args
+		Try some wrong cmds like 'ls fileThatDoestExist | grep bla | more'
+		Try to mix pipes and redirections
+
+	Go crazy & history
+		Navigate through history using up and down, can you retry some cmd?
+		exec cmds that should not work like 'dkgkjkg'. Ensure minishell doesnt crash and display an error
+		'cat | cat | ls' should behave in a "normal way"
+		try to execute a long cmd with a ton of args
+
+	Env vars
+		exec echo w/ en vars ($variable) as args
+			check that $ is interpreted as an environment var
+			check that double quotes interpolate $
+			check that USER exists. otherwise, set it
+			echo "$USER" should print the value of the USER variable
+
+Subject PDF
+	Display a prompt when waiting for a new command
+	Have a working history
+	Search and launch the right executable (based on PATH var, using abs path, relative path)
+	Avoid using more than 1 global var to indicate a received signal. (* Be careful. This global variable cannot provide any other information or data access than the number of a received signal. Therefore, using "norm" type structures in the global scope is forbidden.)
+	Don't interpret unclosed quotes or special characters which are not required by the subject (such as \ or ;)
+	Handle ’ (single quote) which should prevent the shell from interpreting the meta-characters in the quoted sequence.
+	Handle " (double quote) which should prevent the shell from interpreting the meta-characters in the quoted sequence except for $ (dollar sign).
+	Redirections
+		<, >, <<
+
+Personal notes
+	We have an input string. This string has types of tokens.
+
+
+
+
+
+Submodule
+	git submodule rm libft 
+	git rm --cached libft
+	git submodule status 
+	git submodule add https://github.com/JorFik/libft.git lib/libft
+
+
+
+/*
+	Allowed functions:
+
+	readline
+	rl_clear_history
+	rl_on_new_line
+	rl_replace_line
+	rl_redisplay
+	add_history
+	waitpid
+	wait3
+	wait4
+	signal
+	sigaction
+	sigemptyset
+	sigaddset
+	kill
+	exit
+	getcwd
+	chdir
+	stat
+	lstat
+	fstat
+	unlink
+	execve
+	dup
+	dup2
+	pipe
+	opendir
+	readdir
+	closedir
+	strerror
+	perror
+	isatty
+	ttyname
+	ttyslot
+	ioctl
+	getenv
+	tcsetattr
+	tcgetattr
+	tgetent
+	tgetflag
+	tgetnum
+	tgetstr
+	tgoto
+	tputs
+*/
