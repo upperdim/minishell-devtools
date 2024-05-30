@@ -78,7 +78,61 @@ def handle_quotes(line):
 	return token_words
 
 
-def main():
+def jorge_c_tests():
+	def is_string_list_equal(a, b):
+		if len(a) != len(b):
+			return False
+		for i in range(len(a)):
+			if a[i] != b[i]:
+				return False
+		return True
+	
+	print('\njorge_c_tests')
+	# [test_case_str, [expected_output_list]]
+	tests = [
+		['echo Hello World', ['echo', 'Hello', 'World']],
+		['echo "Hello  World"', ['echo', 'Hello  World']],
+		['echo "Hello\' World"', ['echo', "Hello' World"]],
+		['echo "Hello" World"', ['echo', 'Hello', 'World"']],
+		['echo Hello" World', ['echo', 'Hello"', 'World']],
+		['echo "Hello"World', ['echo', 'HelloWorld']],
+		['echo Hello"World"       ', ['echo', 'HelloWorld']],
+		['echo              Hello"World"\'stuck\'        ', ['echo', 'HelloWorldstuck']],
+		['ec ho"  \'Hello  "World\'  x ', ['ec', "ho  'Hello  World'", 'x']],
+		['"\'"\'\'"\'"', ["''"]],
+		['a"\'123\'456"', ["a'123'456"]],
+		['"\'123\'456"', ["'123'456"]],
+		['"\'"', ["'"]],
+		["''", ['']],
+		['""', ['']],
+		['\'"\'', ['"']],
+		['\'\'"\'"', ["'"]],
+		['"no clue of \'\'what other test   "to do\'', ["no clue of ''what other test   to", "do'"]],
+		['echo hi | cat -e', ['echo', 'hi', '|', 'cat', '-e']],
+		['echo hi|cat -e', ['echo', 'hi', '|', 'cat', '-e']],
+		['echo "hi|cat" -e', ['echo', 'hi|cat', '-e']],
+		['echo hi"|"cat -e', ['echo', 'hi|cat', '-e']],
+		['echo" Hello World"', ['echo Hello World']],
+		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
+	]
+	failed_count = 0
+	for test in tests:
+		actual = handle_quotes(test[0])
+		expected = test[1]
+		if not is_string_list_equal(actual, expected):
+			failed_count += 1
+			print(f'Fail: actual = <{actual}>, expected = <{expected}>')
+		# else:
+		# 	print(f'Passed: actual = <{actual}>, expected = <{expected}>')
+	if failed_count == 0:
+		print(f'OK')
+	else:
+		print(f'Failed {failed_count} tests.')
+
+
+# TODO: Write down expected cases for these tests. Algorithm for the test suite is in above function.
+def original_python_tests():
+	print('\noriginal_python_tests')
 	tests = [
 		"",
 		"  say  \"ec ho\"  \'Hello  \"World\'  x ",
@@ -96,9 +150,13 @@ def main():
 		"echo' hello World'",               # todo: should be 'echo hello World'
 		"echo\" hello World\"'asd'\"xyz\"", # todo: should be 'echo hello Worldasdxyz'
 	]
-
 	for test in tests:
 		print(f'{test} becomes {handle_quotes(test)}')
+
+
+def main():
+	original_python_tests()
+	jorge_c_tests()
 
 
 if __name__ == '__main__':
