@@ -24,6 +24,12 @@ def ft_split(s, c):
 	return splits
 
 
+# split str_section by spaces and add the splits into token_words. Ignores empty string splits
+def split_to_words(token_words, str_section):
+	for split in ft_split(str_section, ' '):
+		token_words.append(split)  
+
+
 ALLOW_BACKSPACE_ESCAPING = True
 
 
@@ -69,12 +75,10 @@ def handle_quotes(line):
 
 	current_idx = 0
 	for enclosed_section in filter_included_ranges(enclosed_sections):
-		for split in ft_split(  line[current_idx:enclosed_section[0]], ' '  ):
-			token_words.append(split)                                              # until enclosed section
+		split_to_words(token_words, line[current_idx:enclosed_section[0]])         # until enclosed section                                            
 		token_words.append(  line[enclosed_section[0] + 1:enclosed_section[1]]  )  # inside enclosed section
 		current_idx = enclosed_section[1] + 1                                      # setup it up for after enclosed section
-	for split in ft_split(  line[current_idx:len(line)], ' '):
-		token_words.append(split)
+	split_to_words(token_words, line[current_idx:len(line)])                       # last enclosed section to end of str
 	return token_words
 
 
@@ -95,7 +99,7 @@ def jorge_c_tests():
 		['echo "Hello\' World"', ['echo', "Hello' World"]],
 		['echo "Hello" World"', ['echo', 'Hello', 'World"']],
 		['echo Hello" World', ['echo', 'Hello"', 'World']],
-		['echo "Hello"World', ['echo', 'HelloWorld']],
+		['_echo "Hello"World', ['echo', 'HelloWorld']],
 		['echo Hello"World"       ', ['echo', 'HelloWorld']],
 		['echo              Hello"World"\'stuck\'        ', ['echo', 'HelloWorldstuck']],
 		['ec ho"  \'Hello  "World\'  x ', ['ec', "ho  'Hello  World'", 'x']],
@@ -116,12 +120,12 @@ def jorge_c_tests():
 		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
 	]
 	failed_count = 0
-	for test in tests:
+	for i, test in enumerate(tests):
 		actual = handle_quotes(test[0])
 		expected = test[1]
 		if not is_string_list_equal(actual, expected):
 			failed_count += 1
-			print(f'Fail: actual = <{actual}>, expected = <{expected}>')
+			print(f'Failed test {i + 1}: actual = <{actual}>, expected = <{expected}>')
 		# else:
 		# 	print(f'Passed: actual = <{actual}>, expected = <{expected}>')
 	if failed_count == 0:
@@ -130,22 +134,21 @@ def jorge_c_tests():
 		print(f'Failed {failed_count} tests.')
 
 
-# TODO: Write down expected cases for these tests. Algorithm for the test suite is in above function.
 def original_python_tests():
 	print('\noriginal_python_tests')
 	tests = [
 		"",
 		"  say  \"ec ho\"  \'Hello  \"World\'  x ",
-		"\"\'\"\'\'\"\'\"",
-		"a\"'123'456\"",
+		"\"\'\"\'\'\"\'\"",  # todo: should be <''> (no space = merge them)
+		"a\"'123'456\"", # todo: merge too
 		"\"'123'456\"",
 		"\"\'\"",
 		"\'\'",
 		"\"\"",
 		"\'\"\'",
-		"\'\'\"\'\"",
-		"\"no clue of \'\'what other test   \"to do\'",
-		"export VAR=\"echo  hi | cat\"",
+		"\'\'\"\'\"", # todo: merge
+		"\"no clue of \'\'what other test   \"to do\'", # todo: "to" should merge with the left
+		"export VAR=\"echo  hi | cat\"", # todo: last 2 should merge
 		"echo\" hello World\"",             # todo: should be 'echo hello World'
 		"echo' hello World'",               # todo: should be 'echo hello World'
 		"echo\" hello World\"'asd'\"xyz\"", # todo: should be 'echo hello Worldasdxyz'
@@ -155,7 +158,7 @@ def original_python_tests():
 
 
 def main():
-	original_python_tests()
+	# original_python_tests()
 	jorge_c_tests()
 
 
