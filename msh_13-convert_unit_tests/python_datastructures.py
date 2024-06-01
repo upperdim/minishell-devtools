@@ -144,7 +144,6 @@ test_cases = [
 		"str_index"	: [0, 0],
 		"exp_types"	: [STRING, STRING],
 	},
-	# TODO: there was an error in this test case (TEST 26 in C)
 	{ 
 		"test_case"	: "export VAR=\"echo hi | cat\"",
 		"expected"	: ["export", "VAR", "=echo hi | cat"],
