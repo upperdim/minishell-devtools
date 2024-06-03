@@ -98,7 +98,7 @@ def create_splits(line):
 	return splits, word_indexes
 
 
-def create_final_words(splits, word_indexes):
+def merge_splits_to_words(splits, word_indexes):
 	word_count = word_indexes[-1] + 1
 	final_words = ["" for x in range(word_count)]
 	for i in range(len(word_indexes)):
@@ -107,12 +107,31 @@ def create_final_words(splits, word_indexes):
 	return (final_words)
 
 
+def separate_pipes(words_before):
+	words_after = []
+	for word in words_before:
+		splits = ft_split(word, '|')
+		# Remove whitespace near pipe symbols
+		for i in range(len(splits)):
+			splits[i] = splits[i].strip(' ')
+		# Add | in-between
+		for i in range(len(splits)):
+			words_after.append(splits[i])
+			# Except for the last index, it's not "in-between"
+			if i != len(splits) - 1:
+				words_after.append('|')
+	return words_after
+
+
 # first algorithm first, index words and merge them later
 def create_words(line):
 	_splits, _word_indexes = create_splits(line)
-	return create_final_words(_splits, _word_indexes)
+	words = merge_splits_to_words(_splits, _word_indexes)
+	words = separate_pipes(words)
+	return words
 
 
+# TODO: it doesn't work now because pipe handling always work, when it shouldn't work for words that were enclosed
 def jorge_c_tests():
 	def is_string_list_equal(a, b):
 		if len(a) != len(b):
@@ -125,13 +144,13 @@ def jorge_c_tests():
 	print('\njorge_c_tests')
 	# [test_case_str, [expected_output_list]]
 	tests = [
+		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
 		['_echo "Hello"World', ['_echo', 'HelloWorld']],
 		['echo Hello World', ['echo', 'Hello', 'World']],
 		['echo "Hello  World"', ['echo', 'Hello  World']],
 		['echo "Hello\' World"', ['echo', "Hello' World"]],
 		['echo "Hello" World"', ['echo', 'Hello', 'World"']],
 		['echo Hello" World', ['echo', 'Hello"', 'World']],
-
 		['echo Hello"World"       ', ['echo', 'HelloWorld']],
 		['echo              Hello"World"\'stuck\'        ', ['echo', 'HelloWorldstuck']],
 		['ec ho"  \'Hello  "World\'  x ', ['ec', "ho  'Hello  World'", 'x']],
@@ -149,7 +168,6 @@ def jorge_c_tests():
 		['echo "hi|cat" -e', ['echo', 'hi|cat', '-e']],
 		['echo hi"|"cat -e', ['echo', 'hi|cat', '-e']],
 		['echo" Hello World"', ['echo Hello World']],
-		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
 	]
 
 	def run_tests():
