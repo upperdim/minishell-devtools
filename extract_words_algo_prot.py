@@ -177,7 +177,7 @@ def jorge_c_tests():
 			expected = test[1]
 			if not is_string_list_equal(actual, expected):
 				failed_count += 1
-				print(f'Failed test {i + 1}: actual = <{actual}>, expected = <{expected}>')
+				print(f'Failed test {i + 1:3d}: actual = {(str(actual)): <40}, expected = {(str(expected)): <40}')
 			# else:
 			# 	print(f'Passed: actual = <{actual}>, expected = <{expected}>')
 		if failed_count == 0:
@@ -194,7 +194,7 @@ def jorge_c_tests():
 			print(f'Word indexes = {word_idxs}')
 
 	run_tests()
-	test_splitting()
+	# test_splitting()
 
 
 # these tests are already included above
