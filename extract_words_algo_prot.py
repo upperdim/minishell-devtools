@@ -3,6 +3,17 @@
 # Tokenize words of a shell input line
 
 
+from dataclasses import dataclass
+
+
+@dataclass
+class LineSplit:
+	data: str
+	word_idx: int
+	is_enc_single_quote: bool=False
+	is_enc_double_quote: bool=False
+
+
 def filter_included_ranges(data):
 	included_ranges = []
 	for i, range1 in enumerate(data):
@@ -25,13 +36,50 @@ def ft_split(s, c):
 	return splits
 
 
+# I have a string in python. I want to split it from multiple separator characters. I want an option for each character to decide if it will be kept in the resultant splits. Write me the function.
+# This is exactly the functionality that I want. However, I don't want you to use regex. Generate a code that doesn't use regex.
+def ft_split_multi_keep(input_string, separators, keep_separators):
+    """
+    Splits a string based on multiple separators with an option to keep or discard each separator.
+    
+    Parameters:
+    - input_string (str): The string to split.
+    - separators (list of str): The list of separator characters.
+    - keep_separators (list of bool): A list of boolean values indicating whether to keep the corresponding separator.
+    
+    Returns:
+    - list of str: The list of split parts.
+    """
+    # Check if the lengths of separators and keep_separators are the same
+    if len(separators) != len(keep_separators):
+        raise ValueError("The length of separators and keep_separators must be the same")
+    result = []
+    current_part = []
+    separators_set = set(separators)
+    keep_separators_map = {sep: keep for sep, keep in zip(separators, keep_separators)}
+    for char in input_string:
+        if char in separators_set:
+            # Append the current part to the result if it's not empty
+            if current_part:
+                result.append(''.join(current_part))
+                current_part = []
+            # Append the separator if it should be kept
+            if keep_separators_map[char]:
+                result.append(char)
+        else:
+            current_part.append(char)
+    # Append any remaining part to the result
+    if current_part:
+        result.append(''.join(current_part))
+    return result
+
+
 # split str_section by spaces and add the splits into token_words. Ignores empty string splits
-def split_to_words(token_words, str_section, word_indexes, word_idx):
+def line_to_splits(splits, str_section, word_indexes, word_idx):
 	new_word_idx = word_idx
 	at_least_1_elem = False
-	for split in ft_split(str_section, ' '):
-		token_words.append(split)
-		word_indexes.append(new_word_idx)
+	for split in ft_split_multi_keep(str_section, [' ', '|'], [False, True]):
+		splits.append(LineSplit(split, new_word_idx, False, False))
 		new_word_idx += 1
 		at_least_1_elem = True
 	if at_least_1_elem:
@@ -57,6 +105,7 @@ def single_quote_condition(line, idx, double_q_encountered):
 
 
 def create_splits(line):
+	separator_characters = [' ', '|']
 	splits = []
 	word_indexes = []
 	word_idx = 0
@@ -86,48 +135,51 @@ def create_splits(line):
 
 	current_idx = 0
 	for enclosed_section in filter_included_ranges(enclosed_sections):
-		word_idx = split_to_words(splits, line[current_idx:enclosed_section[0]], word_indexes, word_idx)  # until enclosed section
-		if enclosed_section[0] > 0 and line[enclosed_section[0] - 1] == ' ':
+		# Until enclosed section
+		word_idx = line_to_splits(splits, line[current_idx:enclosed_section[0]], word_indexes, word_idx)
+		if enclosed_section[0] > 0 and line[enclosed_section[0] - 1] in separator_characters:
 			word_idx += 1
-		splits.append(  line[enclosed_section[0] + 1:enclosed_section[1]]  )     # inside enclosed section
-		word_indexes.append(word_idx)
-		if enclosed_section[1] < len(line) - 1 and line[enclosed_section[1] + 1] == ' ':
+		# Inside enclosed section
+		splits.append(LineSplit(line[enclosed_section[0] + 1:enclosed_section[1]], word_idx, True, True)) # todo; figure out which type of quote is the section enclosed by
+		if enclosed_section[1] < len(line) - 1 and line[enclosed_section[1] + 1] in separator_characters:
 			word_idx += 1
-		current_idx = enclosed_section[1] + 1                                    # setup it up for after enclosed section
-	word_idx = split_to_words(splits, line[current_idx:len(line)], word_indexes, word_idx)  # last enclosed section to end of str
-	return splits, word_indexes
+		# Setup it up for after enclosed section
+		current_idx = enclosed_section[1] + 1
+	# From last enclosed section to end of str
+	word_idx = line_to_splits(splits, line[current_idx:len(line)], word_indexes, word_idx)
+	return splits
 
 
-def merge_splits_to_words(splits, word_indexes):
-	word_count = word_indexes[-1] + 1
+def merge_splits_to_words(splits):
+	word_count = splits[-1].word_idx + 1
 	final_words = ["" for x in range(word_count)]
-	for i in range(len(word_indexes)):
-		current_word_idx = word_indexes[i]
-		final_words[current_word_idx] += splits[i]
+	for i in range(len(splits)):
+		current_word_idx = splits[i].word_idx
+		final_words[current_word_idx] += splits[i].data
 	return (final_words)
 
 
-def separate_pipes(words_before):
-	words_after = []
-	for word in words_before:
-		splits = ft_split(word, '|')
-		# Remove whitespace near pipe symbols
-		for i in range(len(splits)):
-			splits[i] = splits[i].strip(' ')
-		# Add | in-between
-		for i in range(len(splits)):
-			words_after.append(splits[i])
-			# Except for the last index, it's not "in-between"
-			if i != len(splits) - 1:
-				words_after.append('|')
-	return words_after
+# def separate_pipes(words_before):
+# 	words_after = []
+# 	for word in words_before:
+# 		splits = ft_split(word, '|')
+# 		# Remove whitespace near pipe symbols
+# 		for i in range(len(splits)):
+# 			splits[i] = splits[i].strip(' ')
+# 		# Add | in-between
+# 		for i in range(len(splits)):
+# 			words_after.append(splits[i])
+# 			# Except for the last index, it's not "in-between"
+# 			if i != len(splits) - 1:
+# 				words_after.append('|')
+# 	return words_after
 
 
 # first algorithm first, index words and merge them later
 def create_words(line):
-	_splits, _word_indexes = create_splits(line)
-	words = merge_splits_to_words(_splits, _word_indexes)
-	words = separate_pipes(words)
+	splits = create_splits(line)
+	words = merge_splits_to_words(splits)
+	# words = separate_pipes(words) # old way of doing things. create_splits() handles pipes too now.
 	return words
 
 
@@ -144,8 +196,11 @@ def jorge_c_tests():
 	print('\njorge_c_tests')
 	# [test_case_str, [expected_output_list]]
 	tests = [
+		# IDEA 1: make an exception list of patterns that will be ignored by the rule that separates this quote
+		# IDEA 2: just do another pass looking for redirection patterns and quotes. Can be done even in token linked list
+		['cat <<" EOF"', ['cat', '<<', ' EOF']],  # redirections near quotes create their own words
 		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
-		['_echo "Hello"World', ['_echo', 'HelloWorld']],
+		['echo "Hello"World', ['echo', 'HelloWorld']],
 		['echo Hello World', ['echo', 'Hello', 'World']],
 		['echo "Hello  World"', ['echo', 'Hello  World']],
 		['echo "Hello\' World"', ['echo', "Hello' World"]],
@@ -177,7 +232,10 @@ def jorge_c_tests():
 			expected = test[1]
 			if not is_string_list_equal(actual, expected):
 				failed_count += 1
-				print(f'Failed test {i + 1:3d}: actual = {(str(actual)): <40}, expected = {(str(expected)): <40}')
+				print(f'\nFailed test {i + 1}')
+				print(f'Test case = {test[0]}')
+				print(f'Actual    = {actual}')
+				print(f'Expected  = {expected}')
 			# else:
 			# 	print(f'Passed: actual = <{actual}>, expected = <{expected}>')
 		if failed_count == 0:
