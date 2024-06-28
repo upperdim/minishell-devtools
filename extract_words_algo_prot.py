@@ -4,6 +4,7 @@
 
 
 from dataclasses import dataclass
+from enum import Enum
 
 
 @dataclass
@@ -14,13 +15,25 @@ class LineSplit:
 	is_enc_double_quote: bool=False
 
 
+class QuoteType(Enum):
+    SINGLE = 1
+    DOUBLE = 2
+
+
+@dataclass
+class EnclosedSection:
+	begin_idx: int
+	end_idx: int
+	quote_type: QuoteType
+
+
 def filter_included_ranges(data):
 	included_ranges = []
 	for i, range1 in enumerate(data):
 		included = False
 		for j, range2 in enumerate(data):
 			if i != j:  # Skip comparing the range with itself
-				if range1[0] >= range2[0] and range1[1] <= range2[1]:
+				if range1.begin_idx >= range2.begin_idx and range1.end_idx <= range2.end_idx:
 					included = True
 					break
 		if not included:
@@ -120,14 +133,14 @@ def create_splits(line):
 	for idx in range(len(line)):
 		if double_quote_condition(line, idx, single_q_encountered):
 			if double_q_encountered == True:
-				enclosed_sections.append([double_q_open_idx, idx])
+				enclosed_sections.append(EnclosedSection(double_q_open_idx, idx, QuoteType.DOUBLE))
 				double_q_encountered = False
 			else:
 				double_q_encountered = True
 				double_q_open_idx = idx
 		if single_quote_condition(line, idx, double_q_encountered):
 			if single_q_encountered == True:
-				enclosed_sections.append([single_q_open_idx, idx])
+				enclosed_sections.append(EnclosedSection(single_q_open_idx, idx, QuoteType.SINGLE))
 				single_q_encountered = False
 			else:
 				single_q_encountered = True
@@ -136,15 +149,15 @@ def create_splits(line):
 	current_idx = 0
 	for enclosed_section in filter_included_ranges(enclosed_sections):
 		# Until enclosed section
-		word_idx = line_to_splits(splits, line[current_idx:enclosed_section[0]], word_indexes, word_idx)
-		if enclosed_section[0] > 0 and line[enclosed_section[0] - 1] in separator_characters:
+		word_idx = line_to_splits(splits, line[current_idx:enclosed_section.begin_idx], word_indexes, word_idx)
+		if enclosed_section.begin_idx > 0 and line[enclosed_section.begin_idx - 1] in separator_characters:
 			word_idx += 1
 		# Inside enclosed section
-		splits.append(LineSplit(line[enclosed_section[0] + 1:enclosed_section[1]], word_idx, True, True)) # todo; figure out which type of quote is the section enclosed by
-		if enclosed_section[1] < len(line) - 1 and line[enclosed_section[1] + 1] in separator_characters:
+		splits.append(LineSplit(line[enclosed_section.begin_idx + 1:enclosed_section.end_idx], word_idx, True, True)) # todo; figure out which type of quote is the section enclosed by
+		if enclosed_section.end_idx < len(line) - 1 and line[enclosed_section.end_idx + 1] in separator_characters:
 			word_idx += 1
 		# Setup it up for after enclosed section
-		current_idx = enclosed_section[1] + 1
+		current_idx = enclosed_section.end_idx + 1
 	# From last enclosed section to end of str
 	word_idx = line_to_splits(splits, line[current_idx:len(line)], word_indexes, word_idx)
 	return splits
@@ -183,7 +196,6 @@ def create_words(line):
 	return words
 
 
-# TODO: it doesn't work now because pipe handling always work, when it shouldn't work for words that were enclosed
 def jorge_c_tests():
 	def is_string_list_equal(a, b):
 		if len(a) != len(b):
@@ -196,6 +208,7 @@ def jorge_c_tests():
 	print('\njorge_c_tests')
 	# [test_case_str, [expected_output_list]]
 	tests = [
+		['echo hi|cat"asd" -e', ['echo', 'hi', '|', 'catasd', '-e']],
 		# IDEA 1: make an exception list of patterns that will be ignored by the rule that separates this quote
 		# IDEA 2: just do another pass looking for redirection patterns and quotes. Can be done even in token linked list
 		['cat <<" EOF"', ['cat', '<<', ' EOF']],  # redirections near quotes create their own words
