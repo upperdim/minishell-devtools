@@ -208,10 +208,32 @@ def jorge_c_tests():
 	print('\njorge_c_tests')
 	# [test_case_str, [expected_output_list]]
 	tests = [
-		['echo hi|cat"asd" -e', ['echo', 'hi', '|', 'catasd', '-e']],
+		# Quote Adjacent Redirections
+		# Exception: Redirections near quotes create their own words
+		#
 		# IDEA 1: make an exception list of patterns that will be ignored by the rule that separates this quote
 		# IDEA 2: just do another pass looking for redirection patterns and quotes. Can be done even in token linked list
-		['cat <<" EOF"', ['cat', '<<', ' EOF']],  # redirections near quotes create their own words
+		['cat <<" EOF"', ['cat', '<<', ' EOF']],  # 
+		['cat <" EOF"', ['cat', '<' ' EOF']],
+		['cat >>" EOF"', ['cat', '>>', ' EOF']],
+		['cat >" EOF"', ['cat', '>', ' EOF']],
+		['cat <<\' EOF\'', ['cat', '<<', ' EOF']],
+		['cat <\' EOF\'', ['cat', '<' ' EOF']],
+		['cat >>\' EOF\'', ['cat', '>>', ' EOF']],
+		['cat >\' EOF\'', ['cat', '>', ' EOF']],
+		
+		# Quote Adjacent Redirections w/ prefix & fd
+		['cat hello<<" EOF"', ['cat', 'hello', '<<', ' EOF']],
+		['cat 123<<" EOF"', ['cat', '123<<', ' EOF']],
+		['cat hello123<<" EOF"', ['cat', 'hello123', '<<', ' EOF']], # has to be entirely digits like above in order to get detected as a file descriptor for the redirection
+		['cat hello1>file2name 123>file1name123>world<<" EOF"', ['cat', 'hello1', '>', 'file2name', '123>', 'file1name123', '>', 'world', '<<', ' EOF']],
+
+		# Range check for redirection fd prefix
+		['cat -12> filename', ['cat', '-12', '>', 'filename']], # since - is not digit, negative numbers count as filenames
+		['cat 2147483647> filename', ['cat', '2147483647>', 'filename']],
+		['cat 2147483648> filename', ['cat', '2147483648', '>', 'filename']],
+		
+		# Quotes & Spaces
 		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
 		['echo "Hello"World', ['echo', 'HelloWorld']],
 		['echo Hello World', ['echo', 'Hello', 'World']],
@@ -230,12 +252,15 @@ def jorge_c_tests():
 		['""', ['']],
 		['\'"\'', ['"']],
 		['\'\'"\'"', ["'"]],
+		['echo" Hello World"', ['echo Hello World']],
 		['"no clue of \'\'what other test   "to do\'', ["no clue of ''what other test   to", "do'"]],
+
+		# Pipes
 		['echo hi | cat -e', ['echo', 'hi', '|', 'cat', '-e']],
+		['echo hi|cat"asd" -e', ['echo', 'hi', '|', 'catasd', '-e']],
 		['echo hi|cat -e', ['echo', 'hi', '|', 'cat', '-e']],
 		['echo "hi|cat" -e', ['echo', 'hi|cat', '-e']],
 		['echo hi"|"cat -e', ['echo', 'hi|cat', '-e']],
-		['echo" Hello World"', ['echo Hello World']],
 	]
 
 	def run_tests():
