@@ -222,16 +222,19 @@ def jorge_c_tests():
 		['cat >>\' EOF\'', ['cat', '>>', ' EOF']],
 		['cat >\' EOF\'', ['cat', '>', ' EOF']],
 		
-		# Quote Adjacent Redirections w/ prefix & fd
+		# Redirections w/ prefix & fd
 		['cat hello<<" EOF"', ['cat', 'hello', '<<', ' EOF']],
 		['cat 123<<" EOF"', ['cat', '123<<', ' EOF']],
 		['cat hello123<<" EOF"', ['cat', 'hello123', '<<', ' EOF']], # has to be entirely digits like above in order to get detected as a file descriptor for the redirection
 		['cat hello1>file2name 123>file1name123>world<<" EOF"', ['cat', 'hello1', '>', 'file2name', '123>', 'file1name123', '>', 'world', '<<', ' EOF']],
 
-		# Range check for redirection fd prefix
+		# Redirections w/ prefix & fd: RANGE CHECK
 		['cat -12> filename', ['cat', '-12', '>', 'filename']], # since - is not digit, negative numbers count as filenames
 		['cat 2147483647> filename', ['cat', '2147483647>', 'filename']],
 		['cat 2147483648> filename', ['cat', '2147483648', '>', 'filename']],
+
+		# Expansion
+		# TBA
 		
 		# Quotes & Spaces
 		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
