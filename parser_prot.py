@@ -27,7 +27,6 @@ class Token:
 
 def create_token(type: TokenType, val: str, prev: Token, next: Token):
 	new = Token(type, val, prev, next)
-	val = ''  # we parsed the current token, reset the val in order to prepare for the next one
 	return new
 
 
@@ -68,6 +67,7 @@ def parse(line):
 		while i < len(s):
 			if s[i] == search_char:
 				return i
+			i += 1
 		return -1
 
 	head = None
@@ -269,9 +269,10 @@ def interactive():
 
 
 def main():
-	ll_test_1()
-	ll_test_2()
-	interactive()
+	# ll_test_1()
+	# ll_test_2()
+	# interactive()
+	tests()
 
 
 if __name__ == '__main__':
