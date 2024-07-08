@@ -107,7 +107,8 @@ def	main():
 	infix_expressions = [
 		"1+2*4-3",
 		"1+2*(4-3)",
-		"(1+2)*4-3"
+		"(1+2)*4-3",
+		"1+2*(2^(2+1)-5)",
 	]
 
 	for infix_expr in infix_expressions:
