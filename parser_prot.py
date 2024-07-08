@@ -76,6 +76,9 @@ def parse(line):
 	while i < len(line):
 		# These checks shall be true only if it's the first char of a token
 		if line[i] == ' ':
+			if len(curr_token_val) > 0:
+				head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
+				curr_token_val = ''
 			i += 1
 			continue
 		elif line[i] == '|':
@@ -105,7 +108,6 @@ def parse(line):
 			next_quote_idx = get_idx_of_next(line, i + 1, quote_type)
 			curr_token_val += line[i + 1:next_quote_idx]
 			i += next_quote_idx - i + 1
-			i += 1
 			continue
 		# if one of above conditions are true, below shouldn't run
 
@@ -169,8 +171,8 @@ def tests():
 	# TODO: use ll_to_list() to convert actual ll into list and compare with expecteds
 	tests = [
 		# Split from redirecitons
-		#['echo asd>hello', ['echo', 'asd', '>', 'hello']],
-		#['echo asd<hello', ['echo', 'asd', '<', 'hello']],
+		['echo asd>hello', ['echo', 'asd', '>', 'hello']],
+		['echo asd<hello', ['echo', 'asd', '<', 'hello']],
 		['echo asd>>hello', ['echo', 'asd', '>>', 'hello']],
 		['echo asd<<hello', ['echo', 'asd', '<<', 'hello']],
 
@@ -179,7 +181,7 @@ def tests():
 		#
 		# IDEA 1: make an exception list of patterns that will be ignored by the rule that separates this quote
 		# IDEA 2: just do another pass looking for redirection patterns and quotes. Can be done even in token linked list
-		#['cat <<" EOF"', ['cat', '<<', ' EOF']],
+		['cat <<" EOF"', ['cat', '<<', ' EOF']],
 		['cat <" EOF"', ['cat', '<', ' EOF']],
 		['cat >>" EOF"', ['cat', '>>', ' EOF']],
 		['cat >" EOF"', ['cat', '>', ' EOF']],
@@ -230,6 +232,7 @@ def tests():
 		['\'\'"\'"', ["'"]],
 		['echo" Hello World"', ['echo Hello World']],
 		['"no clue of \'\'what other test   "to do\'', ["no clue of ''what other test   to", "do'"]],
+		['" dog" cat', [' dog', 'cat']],
 
 		# Pipes
 		['echo hi | cat -e', ['echo', 'hi', '|', 'cat', '-e']],
