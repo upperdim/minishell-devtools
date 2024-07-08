@@ -104,7 +104,7 @@ def parse(line):
 				i += 2
 				continue
 		elif line[i] == "'" or line[i] == '"':
-			quote_type = ("'" if line[i + 1] == "'" else '"')
+			quote_type = ("'" if line[i] == "'" else '"')
 			next_quote_idx = get_idx_of_next(line, i + 1, quote_type)
 			curr_token_val += line[i + 1:next_quote_idx]
 			i += next_quote_idx - i + 1
@@ -171,57 +171,215 @@ def tests():
 	# TODO: use ll_to_list() to convert actual ll into list and compare with expecteds
 	tests = [
 		# Split from redirecitons
-		['echo asd>hello', ['echo', 'asd', '>', 'hello']],
-		['echo asd<hello', ['echo', 'asd', '<', 'hello']],
-		['echo asd>>hello', ['echo', 'asd', '>>', 'hello']],
-		['echo asd<<hello', ['echo', 'asd', '<<', 'hello']],
+		['echo asd>hello', 
+   			['echo',
+	   		'asd',
+			'>',
+			'hello'
+			]
+		],
+		['echo asd<hello',
+   			['echo',
+	   		'asd',
+			'<',
+			'hello'
+			]
+		],
+		['echo asd>>hello',
+   			['echo',
+	   		'asd',
+			'>>',
+			'hello']
+		],
+		['echo asd<<hello',
+   			['echo',
+	   		'asd',
+			'<<',
+			'hello'
+			]
+		],
 
 		# Quote Adjacent Redirections
 		# Exception: Redirections near quotes create their own words
 		#
 		# IDEA 1: make an exception list of patterns that will be ignored by the rule that separates this quote
 		# IDEA 2: just do another pass looking for redirection patterns and quotes. Can be done even in token linked list
-		['cat <<" EOF"', ['cat', '<<', ' EOF']],
-		['cat <" EOF"', ['cat', '<', ' EOF']],
-		['cat >>" EOF"', ['cat', '>>', ' EOF']],
-		['cat >" EOF"', ['cat', '>', ' EOF']],
-		['cat <<\' EOF\'', ['cat', '<<', ' EOF']],
-		['cat <\' EOF\'', ['cat', '<', ' EOF']],
-		['cat >>\' EOF\'', ['cat', '>>', ' EOF']],
-		['cat >\' EOF\'', ['cat', '>', ' EOF']],
+		['cat <<" EOF"',
+   			['cat',
+	   		'<<',
+			' EOF'
+			]
+		],
+		['cat <" EOF"',
+   			['cat',
+			'<',
+			' EOF'
+			]
+		],
+		['cat >>" EOF"',
+   			['cat',
+	   		'>>',
+			' EOF'
+			]
+		],
+		['cat >" EOF"',
+   			['cat',
+	   		'>',
+			' EOF'
+			]
+		],
+		['cat <<\' EOF\'',
+   			['cat',
+			'<<',
+			' EOF'
+			]
+		],
+		['cat <\' EOF\'',
+   			['cat',
+			'<',
+			' EOF'
+			]
+		],
+		['cat >>\' EOF\'',
+   			['cat',
+	   		'>>',
+			' EOF'
+			]
+		],
+		['cat >\' EOF\'',
+   			['cat',
+	   		'>',
+			' EOF'
+			]
+		],
 		
 		# Redirections w/ prefix & fd
-		['cat hello<<" EOF"', ['cat', 'hello', '<<', ' EOF']],
-		['cat 123<<" EOF"', ['cat', '123<<', ' EOF']],
-		['cat hello123<<" EOF"', ['cat', 'hello123', '<<', ' EOF']], # has to be entirely digits like above in order to get detected as a file descriptor for the redirection
-		['cat hello1>file2name 123>file1name123>world<<" EOF"', ['cat', 'hello1', '>', 'file2name', '123>', 'file1name123', '>', 'world', '<<', ' EOF']],
+		['cat hello<<" EOF"',
+   			['cat',
+	   		'hello',
+			'<<',
+			' EOF'
+			]
+		],
+		['cat 123<<" EOF"',
+   			['cat',
+	   		'123<<',
+			' EOF'
+			]
+		],
+		['cat hello123<<" EOF"',
+   			['cat',
+	   		'hello123',
+			'<<',
+			' EOF'
+			]
+		], # has to be entirely digits like above in order to get detected as a file descriptor for the redirection
+		['cat hello1>file2name 123>file1name123>world<<" EOF"',
+   			['cat',
+			'hello1',
+			'>',
+			'file2name',
+			'123>',
+			'file1name123',
+			'>',
+			'world',
+			'<<',
+			' EOF'
+			]
+		],
 
 		# Redirections w/ prefix & fd: RANGE CHECK
-		['cat -12> filename', ['cat', '-12', '>', 'filename']], # since - is not digit, negative numbers count as filenames
-		['cat 2147483647> filename', ['cat', '2147483647>', 'filename']],
-		['cat 2147483648> filename', ['cat', '2147483648', '>', 'filename']],
+		['cat -12> filename',
+   			['cat',
+	   		'-12',
+			'>',
+			'filename'
+			]
+		], # since - is not digit, negative numbers count as filenames
+		['cat 2147483647> filename',
+   			['cat',
+	   		'2147483647>',
+			'filename'
+			]
+		],
+		['cat 2147483648> filename',
+   			['cat',
+	   		'2147483648',
+			'>',
+			'filename'
+			]
+		],
 
 		# Error handling for invalid inputs
 		#
 		# These will be labeled as SYNTAX ERRORs either after tokenization or maybe here in lexing process
 		# If you have a reliable way of cutting them out, just stop processing and give error to user
-		['cat << >> <" EOF"', ['cat', '<<', '>>', '<', ' EOF']], # expected is discussible
-		['cat <<>> <" EOF"', ['cat', '<<', '>>', '<', ' EOF']],  # expected is discussible
+		['cat << >> <" EOF"',
+   			['cat',
+	   		'<<',
+			'>>',
+			'<',
+			' EOF'
+			]
+		], # expected is discussible
+		['cat <<>> <" EOF"',
+   			['cat',
+	   		'<<',
+			'>>',
+			'<',
+			' EOF'
+			]
+		],  # expected is discussible
 
 		# Expansion
 		# TBA
 		
 		# Quotes & Spaces
-		['export VAR="echo hi | cat"', ['export', 'VAR=echo hi | cat']],
-		['echo "Hello"World', ['echo', 'HelloWorld']],
-		['echo Hello World', ['echo', 'Hello', 'World']],
-		['echo "Hello  World"', ['echo', 'Hello  World']],
+		['export VAR="echo hi | cat"',
+   			['export',
+	   		'VAR=echo hi | cat'
+			]
+		],
+		['echo "Hello"World',
+   			['echo',
+	   		'HelloWorld'
+			]
+		],
+		['echo Hello World',
+   			['echo',
+	   		'Hello',
+			'World'
+			]
+		],
+		['echo "Hello  World"',
+   			['echo',
+	   		'Hello  World'
+			]
+		],
 		#['echo "Hello\' World"', ['echo', "Hello' World"]],
-		['echo "Hello" World"', ['echo', 'Hello', 'World"']],
+		['echo "Hello" World"',
+   			['echo',
+	   		'Hello',
+			'World"'
+			]
+		],
 		#['echo Hello" World', ['echo', 'Hello"', 'World']],
-		['echo Hello"World"       ', ['echo', 'HelloWorld']],
-		['echo              Hello"World"\'stuck\'        ', ['echo', 'HelloWorldstuck']],
-		['ec ho"  \'Hello  "World\'  x ', ['ec', "ho  'Hello  World'", 'x']],
+		['echo Hello"World"       ',
+   			['echo',
+	   		'HelloWorld'
+			]
+		],
+		['echo              Hello"World"\'stuck\'        ',
+   			['echo',
+	   		'HelloWorldstuck'
+			]
+		],
+		['ec ho"  \'Hello  "World\'  x ',
+   			['ec',
+	   		"ho  'Hello  World'",
+			'x'
+			]
+		],
 		['"\'"\'\'"\'"', ["''"]],
 		['a"\'123\'456"', ["a'123'456"]],
 		['"\'123\'456"', ["'123'456"]],
