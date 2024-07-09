@@ -64,6 +64,35 @@ def parse(line):
 				return i
 			i += 1
 		return -1
+	
+	def handle_quotes(line, i, idx_dist_to_quote, curr_token_val):
+		'''
+		Updates `quote_token_val` and adjusts `i` after properly handling quotes.
+
+		Inputs:
+		- line              : input line
+		- i                 : current index in the line
+		- idx_dist_to_quote : adding this to `i` should give index of the opening quote
+
+		Outputs:
+		- curr_token_val : updated current token value
+		- i              : updated index position in the line  
+		'''
+		quote_type = ("'" if line[i + idx_dist_to_quote] == "'" else '"')
+		# append a substr of entire quote to the curr_token_val (exclude quote chars)
+		next_quote_idx = get_idx_of_next(line, i + idx_dist_to_quote + 1, quote_type)
+		if next_quote_idx == -1:
+			# next quote not found, just append the quote char itself
+			# curr_token_val += line[i + idx_dist_to_quote:i + idx_dist_to_quote + 1]
+			# i += 1
+			
+			# or instead of dealing with edge cases and bugs of this, just say invalid syntax and quit
+			print('Invalid syntax. Unclosed quotes.')
+			exit()
+		else:
+			curr_token_val += line[i + idx_dist_to_quote + 1:next_quote_idx]
+			i += next_quote_idx - i
+		return curr_token_val, i
 
 	head = None
 	i = 0
@@ -99,10 +128,8 @@ def parse(line):
 				i += 2
 				continue
 		elif line[i] == "'" or line[i] == '"':
-			quote_type = ("'" if line[i] == "'" else '"')
-			next_quote_idx = get_idx_of_next(line, i + 1, quote_type)
-			curr_token_val += line[i + 1:next_quote_idx]
-			i += next_quote_idx - i + 1
+			curr_token_val, i = handle_quotes(line, i, 0, curr_token_val)
+			i += 1
 			continue
 		# if one of above conditions are true, below shouldn't run
 
@@ -138,16 +165,7 @@ def parse(line):
 					curr_token_val = ''
 					i += 1
 		elif line[i + 1] == "'" or line[i + 1] == '"':
-			quote_type = ("'" if line[i + 1] == "'" else '"')
-			# append a substr of entire quote to the curr_token_val (exclude quote chars)
-			next_quote_idx = get_idx_of_next(line, i + 2, quote_type)
-			if next_quote_idx == -1:
-				# next quote not found, just append the quote char itself
-				curr_token_val += line[i + 1:i + 2]
-				i += 1
-			else:
-				curr_token_val += line[i + 2:next_quote_idx]
-				i += next_quote_idx - i
+			curr_token_val, i = handle_quotes(line, i, 1, curr_token_val)
 		i += 1
 	if len(curr_token_val) > 0:
 		head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
@@ -160,12 +178,12 @@ def tests():
 		iter = head
 		while iter is not None:
 			if iter.val != token_list[i][0] or iter.type != token_list[i][1]:
-				return False
+				return -1
 			iter = iter.next
 			i += 1
 		if i != len(token_list):
-			return False
-		return True
+			return -2
+		return 1
 
 	tests = [
 		# Currently debugging
@@ -379,12 +397,6 @@ def tests():
 	   		['HelloWorldstuck', TokenType.STRING],
 			]
 		],
-		['ec ho"  \'Hello  "World\'  x ',
-   			[['ec', TokenType.STRING],
-	   		["ho  'Hello  World'", TokenType.STRING],
-			['x', TokenType.STRING],
-			]
-		],
 		['"\'"\'\'"\'"',
    			[["''", TokenType.STRING]]
 		],
@@ -462,41 +474,63 @@ def tests():
 		],
 
 		# Unclosed Quotes
-		['echo "Hello\' World"',
-   			[["echo", TokenType.STRING],
-	  		["Hello' World", TokenType.STRING],
-			]
-		],
-		['echo "Hello" World"',
-   			[["echo", TokenType.STRING],
-	   		['Hello', TokenType.STRING],
-	   		['World"', TokenType.STRING],
-			]
-		],
-		['echo Hello" World',
-   			[["echo", TokenType.STRING],
-	   		['Hello"', TokenType.STRING],
-	   		['World', TokenType.STRING],
-			]
-		],
+		# ['ec ho"  \'Hello  "World\'  x ',
+		# 	[['ec', TokenType.STRING],
+		# 	["ho  'Hello  World'", TokenType.STRING],
+		# 	['x', TokenType.STRING],
+		# 	]
+		# ],
+		# ['echo >>"hi"\'x y ',
+   		# 	[['echo', TokenType.STRING],
+	   	# 	['>>', TokenType.APPEND_TO],
+	   	# 	["hi'x", TokenType.STRING],
+		# 	['y', TokenType.STRING],
+		# 	]
+		# ],
+		# ['echo >>"hi"\'',
+   		# 	[['echo', TokenType.STRING],
+	   	# 	['>>', TokenType.APPEND_TO],
+	   	# 	["hi'", TokenType.STRING],
+		# 	]
+		# ],
+		# ['echo "Hello\' World"',
+   		# 	[["echo", TokenType.STRING],
+	  	# 	["Hello' World", TokenType.STRING],
+		# 	]
+		# ],
+		# ['echo "Hello" World"',
+   		# 	[["echo", TokenType.STRING],
+	   	# 	['Hello', TokenType.STRING],
+	   	# 	['World"', TokenType.STRING],
+		# 	]
+		# ],
+		# ['echo Hello" World',
+   		# 	[["echo", TokenType.STRING],
+	   	# 	['Hello"', TokenType.STRING],
+	   	# 	['World', TokenType.STRING],
+		# 	]
+		# ],
 	]
 	
 	failed_count = 0
 	for i, test in enumerate(tests):
+		# print(f'i={i} test case = {test[0]}')
 		actual_ll_head = parse(test[0])
 		expected_list = test[1]
-		if not is_ll_equal_list(actual_ll_head, expected_list):
+		is_equal = is_ll_equal_list(actual_ll_head, expected_list)
+		if is_equal != 1:
 			failed_count += 1
 			print(f'\nFailed test {i + 1}')
 			print(f'Test case = {test[0]}')
 			print(f'Actual    = ')
 			print_ll(actual_ll_head, '\t')
 			print(f'Expected  = {expected_list}')
-		print(f'i={i} test case = {test[0]}')
+			if is_equal == -2:
+				print(f'MISMATCHING TOKEN LIST SIZES')
 	if failed_count == 0:
 		print(f'OK')
 	else:
-		print(f'Failed {failed_count} tests.')
+		print(f'\nFailed {failed_count} tests.')
 
 
 def ll_test_1():
