@@ -25,17 +25,12 @@ class Token:
 	prev: Token
 
 
-def create_token(type: TokenType, val: str, prev: Token, next: Token):
-	new = Token(type, val, prev, next)
-	return new
-
-
-def print_list(head: Token):
+def print_ll(head: Token, lines_prefix: str=''):
 	if head is None:
-		print('<null node>')
+		print(f'{lines_prefix}<null node>')
 	iter = head
 	while iter is not None:
-		print(f'{iter.type}: ({iter.val})')
+		print(f'{lines_prefix}{iter.type}: ({iter.val})')
 		iter = iter.next
 
 
@@ -115,7 +110,6 @@ def parse(line):
 
 		# These will be true on rest of the chars of the token
 		if i + 1 == len(line) or line[i + 1] == ' ' or line[i + 1] == '|':
-			# TODO: add current char to curr_token_val too before creating STRING type?
 			head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
 			curr_token_val = ''
 		elif line[i + 1] == '>' or line[i + 1] == '<':
@@ -134,7 +128,7 @@ def parse(line):
 					new_type = (TokenType.HERE_DOC if redirection_type == '<' else TokenType.APPEND_TO)
 					head = add_token(head, Token(new_type, new_val, None, None))
 					curr_token_val = ''
-					i += 2
+					i += 3
 					continue
 				else:
 					# > or < w/ number
@@ -145,36 +139,48 @@ def parse(line):
 					i += 1
 		elif line[i + 1] == "'" or line[i + 1] == '"':
 			quote_type = ("'" if line[i + 1] == "'" else '"')
-			# TODO: add curr char to curr_token_val before doing this?
 			# append a substr of entire quote to the curr_token_val (exclude quote chars)
 			next_quote_idx = get_idx_of_next(line, i + 2, quote_type)
-			curr_token_val += line[i + 2:next_quote_idx]
-			# increase i to be right after the quote end
-			i += next_quote_idx - i
+			if next_quote_idx == -1:
+				# next quote not found, just append the quote char itself
+				curr_token_val += line[i + 1:i + 2]
+				i += 1
+			else:
+				curr_token_val += line[i + 2:next_quote_idx]
+				i += next_quote_idx - i
 		i += 1
-	# TODO: check if this breaks lines that end with something else with quotes
 	if len(curr_token_val) > 0:
 		head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
 	return head
 
 
 def tests():
-	def ll_to_list(head):
-		result = []
+	def is_ll_equal_list(head: Token, token_list):
+		i = 0
 		iter = head
 		while iter is not None:
-			result.append(iter)
-		return result
+			if iter.val != token_list[i][0] or iter.type != token_list[i][1]:
+				return False
+			iter = iter.next
+			i += 1
+		if i != len(token_list):
+			return False
+		return True
 
-	# TODO: remove cases with invalid quotes
-	# TODO: convert str lists to Token object lists in expected cases
-	# TODO: use ll_to_list() to convert actual ll into list and compare with expecteds
 	tests = [
+		# Currently debugging
+		["''",
+   			[['', TokenType.STRING]]
+		],
+		['""',
+   			[['', TokenType.STRING]]
+		],
+		
 		# Split from redirecitons
 		['echo asd>hello', 
    			[['echo', TokenType.STRING],
 	   		['asd', TokenType.STRING],
-			['>', TokenType.APPEND_TO],
+			['>', TokenType.REDIR_TO],
 			['hello', TokenType.STRING]
 			]
 		],
@@ -354,12 +360,15 @@ def tests():
 		],
 		['echo "Hello  World"',
    			[['echo', TokenType.STRING],
-	   		['echo', TokenType.STRING],
+	   		['Hello  World', TokenType.STRING],
 			]
 		],
-		#['echo "Hello\' World"', ['echo', "Hello' World"]],
-		#['echo "Hello" World"', ['echo', 'Hello', 'World"']],
-		#['echo Hello" World', ['echo', 'Hello"', 'World']],
+		['cat "hello" x',
+			[['cat', TokenType.STRING],
+			['hello', TokenType.STRING],
+			['x', TokenType.STRING],
+			]
+		],
 		['echo Hello"World"       ',
    			[['echo', TokenType.STRING],
 	   		['HelloWorld', TokenType.STRING],
@@ -451,7 +460,43 @@ def tests():
 			["-e", TokenType.STRING],
 			]
 		],
+
+		# Unclosed Quotes
+		['echo "Hello\' World"',
+   			[["echo", TokenType.STRING],
+	  		["Hello' World", TokenType.STRING],
+			]
+		],
+		['echo "Hello" World"',
+   			[["echo", TokenType.STRING],
+	   		['Hello', TokenType.STRING],
+	   		['World"', TokenType.STRING],
+			]
+		],
+		['echo Hello" World',
+   			[["echo", TokenType.STRING],
+	   		['Hello"', TokenType.STRING],
+	   		['World', TokenType.STRING],
+			]
+		],
 	]
+	
+	failed_count = 0
+	for i, test in enumerate(tests):
+		actual_ll_head = parse(test[0])
+		expected_list = test[1]
+		if not is_ll_equal_list(actual_ll_head, expected_list):
+			failed_count += 1
+			print(f'\nFailed test {i + 1}')
+			print(f'Test case = {test[0]}')
+			print(f'Actual    = ')
+			print_ll(actual_ll_head, '\t')
+			print(f'Expected  = {expected_list}')
+		print(f'i={i} test case = {test[0]}')
+	if failed_count == 0:
+		print(f'OK')
+	else:
+		print(f'Failed {failed_count} tests.')
 
 
 def ll_test_1():
@@ -460,19 +505,19 @@ def ll_test_1():
 	n2 = Token(TokenType.STRING, "world", n3, None)
 	n1 = Token(TokenType.STRING, "hello", n2, None)
 	n2.prev = n1
-	print_list(n1)
-	print_list(n1)
+	print_ll(n1)
+	print_ll(n1)
 
 def ll_test_2():
 	print(f'Runnig test #2:')
 	head = None
-	print_list(head)
+	print_ll(head)
 	head = add_token(head, Token(TokenType.STRING, "one", None, None))
-	print_list(head)
+	print_ll(head)
 	head = add_token(head, Token(TokenType.STRING, "two", None, None))
-	print_list(head)
+	print_ll(head)
 	head = add_token(head, Token(TokenType.STRING, "three", None, None))
-	print_list(head)
+	print_ll(head)
 
 
 def interactive():
@@ -482,14 +527,14 @@ def interactive():
 			print('Invalid input: unclosed quotes')
 		else:
 			tokens = parse(line)
-			print_list(tokens)
+			print_ll(tokens)
 
 
 def main():
 	# ll_test_1()
 	# ll_test_2()
-	interactive()
-	# tests()
+	# interactive()
+	tests()
 
 
 if __name__ == '__main__':
