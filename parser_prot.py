@@ -48,8 +48,13 @@ def add_token(head: Token, new: Token):
 
 def validate_quotes(line):
 	'''Checks whether single and double quotes were closed correctly or not'''
-	# TODO: handle nested single & double quotes
-	return True  # TODO: placeholder, implement the function
+	quote_type = None
+	for c in line:
+		if quote_type is None and (c == '"' or c == "'"):
+			quote_type = c
+		elif quote_type == c:
+			quote_type = None
+	return quote_type is None
 
 
 def parse(line):
@@ -65,7 +70,7 @@ def parse(line):
 			i += 1
 		return -1
 	
-	def handle_quotes(line, i, idx_dist_to_quote, curr_token_val):
+	def handle_quotes(line, i, idx_dist_to_quote, curr_token_val, head):
 		'''
 		Updates `quote_token_val` and adjusts `i` after properly handling quotes.
 
@@ -89,10 +94,14 @@ def parse(line):
 			# or instead of dealing with edge cases and bugs of this, just say invalid syntax and quit
 			print('Invalid syntax. Unclosed quotes.')
 			exit()
+		elif next_quote_idx == i + idx_dist_to_quote + 1:
+			if len(curr_token_val) == 0:
+				head = add_token(head, Token(TokenType.STRING, '', None, None))
+			i += 1
 		else:
 			curr_token_val += line[i + idx_dist_to_quote + 1:next_quote_idx]
 			i += next_quote_idx - i
-		return curr_token_val, i
+		return curr_token_val, i, head
 
 	head = None
 	i = 0
@@ -128,7 +137,7 @@ def parse(line):
 				i += 2
 				continue
 		elif line[i] == "'" or line[i] == '"':
-			curr_token_val, i = handle_quotes(line, i, 0, curr_token_val)
+			curr_token_val, i, head = handle_quotes(line, i, 0, curr_token_val, head)
 			i += 1
 			continue
 		# if one of above conditions are true, below shouldn't run
@@ -165,7 +174,7 @@ def parse(line):
 					curr_token_val = ''
 					i += 1
 		elif line[i + 1] == "'" or line[i + 1] == '"':
-			curr_token_val, i = handle_quotes(line, i, 1, curr_token_val)
+			curr_token_val, i, head = handle_quotes(line, i, 1, curr_token_val, head)
 		i += 1
 	if len(curr_token_val) > 0:
 		head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
@@ -187,12 +196,6 @@ def tests():
 
 	tests = [
 		# Currently debugging
-		["''",
-   			[['', TokenType.STRING]]
-		],
-		['""',
-   			[['', TokenType.STRING]]
-		],
 		
 		# Split from redirecitons
 		['echo asd>hello', 
@@ -398,7 +401,7 @@ def tests():
 			]
 		],
 		['"\'"\'\'"\'"',
-   			[["''", TokenType.STRING]]
+			[["''", TokenType.STRING]]
 		],
 		['a"\'123\'456"',
    			[["a'123'456", TokenType.STRING]]
@@ -419,7 +422,9 @@ def tests():
    			[['"', TokenType.STRING]]
 		],
 		['\'\'"\'"',
-   			[["'", TokenType.STRING]]
+   			[["", TokenType.STRING],
+	   		["'", TokenType.STRING]
+			]
 		],
 		['echo" Hello World"',
    			[["echo Hello World", TokenType.STRING]]
@@ -432,6 +437,15 @@ def tests():
 		['" dog" cat',
    			[[" dog", TokenType.STRING],
 	   		["cat", TokenType.STRING],
+			]
+		],
+		['echo asd << "" << file2',
+			[['echo', TokenType.STRING],
+			['asd', TokenType.STRING],
+			['<<', TokenType.HERE_DOC],
+			['', TokenType.STRING],
+			['<<', TokenType.HERE_DOC],
+			['file2', TokenType.STRING],
 			]
 		],
 
