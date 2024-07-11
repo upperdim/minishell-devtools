@@ -72,38 +72,32 @@ def detect_expansions(line):
 	s = 0
 	while s < len(line):
 		if line[s] == "'":
-			# update the state of being inside a single quote or not
 			is_in_single_quote = not is_in_single_quote
-		elif line[s] == '$':
-			# we are at $
-			if not is_in_single_quote:
-				# we are at a $ that is eligible for expansion
-				
-				# if next is numeric, skip
-				if s + 1 < len(line) and is_digit(line[s + 1]):
-					s += 2
-					var_idx += 1
-					continue
-				# find e
-				e = s + 1
-				while e < len(line) and is_valid_var_char(line[e]):
-					e += 1
-				# if $$, we will expand
-				if e == s + 1:
-					if line[e] == '$':
-						vars_idxs_to_expand.append(var_idx) # append first $
-						var_idx += 2 # increase index for both of them
-						s += 2
-						continue
-				else:
-					vars_idxs_to_expand.append(var_idx)
-				# skip iter var
-				s = e
-				var_idx += 1
-				continue
-			# update the idx for $
+			s += 1
+			continue
+		if line[s] != '$':
+			s += 1
+			continue
+		if is_in_single_quote:
 			var_idx += 1
-		s += 1
+			s += 1
+			continue
+		if s + 1 < len(line) and is_digit(line[s + 1]):
+			s += 2
+			var_idx += 1
+			continue
+		e = s + 1
+		while e < len(line) and is_valid_var_char(line[e]):
+			e += 1
+		if e != s + 1:
+			vars_idxs_to_expand.append(var_idx)
+		elif line[e] == '$':
+			vars_idxs_to_expand.append(var_idx)
+			var_idx += 2
+			s += 2
+			continue
+		s = e
+		var_idx += 1
 	return vars_idxs_to_expand
 
 
@@ -604,7 +598,7 @@ def parser_tests():
 
 
 def ll_test_1():
-	print(f'Runnig test #1:')
+	print(f'Runnig linked list test #1:')
 	n3 = Token(TokenType.STRING, "!", None, None)
 	n2 = Token(TokenType.STRING, "world", n3, None)
 	n1 = Token(TokenType.STRING, "hello", n2, None)
@@ -613,7 +607,7 @@ def ll_test_1():
 	print_ll(n1)
 
 def ll_test_2():
-	print(f'Runnig test #2:')
+	print(f'Runnig linked list test #2:')
 	head = None
 	print_ll(head)
 	head = add_token(head, Token(TokenType.STRING, "one", None, None))
