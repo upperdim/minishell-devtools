@@ -57,6 +57,24 @@ def validate_quotes(line):
 	return quote_type is None
 
 
+def detect_expansions(line):
+	vars_to_expand = []
+	var_idx = 0
+	is_in_single_quote = False
+	for c in line:
+		if c == "'":
+			is_in_single_quote = not is_in_single_quote
+		elif not is_in_single_quote and c == '$':
+			# inspect if this is a variable and will be expanded
+			#
+			# mind var rules, $$, $4, $hi$there, $?, etc...
+			will_expanded = None
+			if will_expanded:
+				vars_to_expand.append(var_idx)
+			var_idx
+	return vars_to_expand
+
+
 def parse(line):
 	def get_idx_of_next(s, search_start_idx, search_char):
 		'''
@@ -103,6 +121,35 @@ def parse(line):
 			i += next_quote_idx - i
 		return curr_token_val, i, head
 
+	def handle_if_first_char(line, i, curr_token_val, head):
+		'''These checks shall be true only if it's the first char of a token'''
+		if line[i] == ' ':
+			if len(curr_token_val) > 0:
+				head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
+				curr_token_val = ''
+			return True, line, i, curr_token_val, head
+		elif line[i] == '|':
+			head = add_token(head, Token(TokenType.PIPE, "|", None, None))
+			return True, line, i, curr_token_val, head
+		elif line[i] == '<':
+			if i != len(line) and line[i + 1] != '<':
+				head = add_token(head, Token(TokenType.REDIR_FROM, '<', None, None))
+			else:
+				head = add_token(head, Token(TokenType.HERE_DOC, '<<', None, None))
+				i += 1
+			return True, line, i, curr_token_val, head
+		elif line[i] == '>':
+			if i != len(line) and line[i + 1] != '>':
+				head = add_token(head, Token(TokenType.REDIR_TO, '>', None, None))
+			else:
+				head = add_token(head, Token(TokenType.APPEND_TO, '>>', None, None))
+				i += 1
+			return True, line, i, curr_token_val, head
+		elif line[i] == "'" or line[i] == '"':
+			curr_token_val, i, head = handle_quotes(line, i, 0, curr_token_val, head)
+			return True, line, i, curr_token_val, head
+		return False, line, i, curr_token_val, head
+
 	if not validate_quotes(line):
 		print('SyntaxError: unclosed quotes')
 		return
@@ -110,40 +157,10 @@ def parse(line):
 	i = 0
 	curr_token_val = ''
 	while i < len(line):
-		# These checks shall be true only if it's the first char of a token
-		if line[i] == ' ':
-			if len(curr_token_val) > 0:
-				head = add_token(head, Token(TokenType.STRING, curr_token_val, None, None))
-				curr_token_val = ''
+		is_first_char, line, i, curr_token_val, head = handle_if_first_char(line, i, curr_token_val, head)
+		if is_first_char:
 			i += 1
 			continue
-		elif line[i] == '|':
-			head = add_token(head, Token(TokenType.PIPE, "|", None, None))
-			i += 1
-			continue
-		elif line[i] == '<':
-			if i != len(line) and line[i + 1] != '<':
-				head = add_token(head, Token(TokenType.REDIR_FROM, '<', None, None))
-				i += 1
-				continue
-			else:
-				head = add_token(head, Token(TokenType.HERE_DOC, '<<', None, None))
-				i += 2
-				continue
-		elif line[i] == '>':
-			if i != len(line) and line[i + 1] != '>':
-				head = add_token(head, Token(TokenType.REDIR_TO, '>', None, None))
-				i += 1
-				continue
-			else:
-				head = add_token(head, Token(TokenType.APPEND_TO, '>>', None, None))
-				i += 2
-				continue
-		elif line[i] == "'" or line[i] == '"':
-			curr_token_val, i, head = handle_quotes(line, i, 0, curr_token_val, head)
-			i += 1
-			continue
-		# if one of above conditions are true, below shouldn't run
 
 		curr_token_val += line[i]
 
@@ -532,7 +549,9 @@ def parser_tests():
 	]
 	
 	failed_count = 0
+	test_count = 0
 	for i, test in enumerate(tests):
+		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
 		actual_ll_head = parse(test[0])
 		expected_list = test[1]
@@ -547,7 +566,7 @@ def parser_tests():
 			if is_equal == -2:
 				print(f'MISMATCHING TOKEN LIST SIZES')
 	if failed_count == 0:
-		print(f'OK')
+		print(f'OK ({test_count})')
 	else:
 		print(f'\nFailed {failed_count} tests.')
 
@@ -589,7 +608,9 @@ def quote_validation_tests():
 	]
 
 	failed_count = 0
+	test_count = 0
 	for i, test in enumerate(quote_val_tests):
+		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
 		actual = validate_quotes(test[0])
 		expected = test[1]
@@ -600,7 +621,7 @@ def quote_validation_tests():
 			print(f'Actual    = {actual}')
 			print(f'Expected  = {expected}')
 	if failed_count == 0:
-		print(f'OK')
+		print(f'OK ({test_count})')
 	else:
 		print(f'\nFailed {failed_count} tests.')
 
