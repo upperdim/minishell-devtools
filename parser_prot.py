@@ -90,9 +90,9 @@ def parse(line):
 			# next quote not found, just append the quote char itself
 			# curr_token_val += line[i + idx_dist_to_quote:i + idx_dist_to_quote + 1]
 			# i += 1
-			
+
 			# or instead of dealing with edge cases and bugs of this, just say invalid syntax and quit
-			print('Invalid syntax. Unclosed quotes.')
+			print('SyntaxError: unclosed quotes')
 			exit()
 		elif next_quote_idx == i + idx_dist_to_quote + 1:
 			if len(curr_token_val) == 0:
@@ -103,6 +103,9 @@ def parse(line):
 			i += next_quote_idx - i
 		return curr_token_val, i, head
 
+	if not validate_quotes(line):
+		print('SyntaxError: unclosed quotes')
+		return
 	head = None
 	i = 0
 	curr_token_val = ''
@@ -181,7 +184,9 @@ def parse(line):
 	return head
 
 
-def tests():
+def parser_tests():
+	print('Running parser tests...')
+
 	def is_ll_equal_list(head: Token, token_list):
 		i = 0
 		iter = head
@@ -568,6 +573,38 @@ def ll_test_2():
 	print_ll(head)
 
 
+def quote_validation_tests():
+	print('Running quote validation tests...')
+
+	quote_val_tests = [
+		['', True],
+		['\'', False],
+		['\"', False],
+		['\'\'', True],
+		['""', True],
+		['\'\'\'', False],
+		['"""', False],
+		[' " \' " ', True],
+		[' " \' " \' " ', False],
+	]
+
+	failed_count = 0
+	for i, test in enumerate(quote_val_tests):
+		# print(f'i={i} test case = {test[0]}')
+		actual = validate_quotes(test[0])
+		expected = test[1]
+		if actual != expected:
+			failed_count += 1
+			print(f'\nFailed test {i + 1}')
+			print(f'Test case = {test[0]}')
+			print(f'Actual    = {actual}')
+			print(f'Expected  = {expected}')
+	if failed_count == 0:
+		print(f'OK')
+	else:
+		print(f'\nFailed {failed_count} tests.')
+
+	
 def interactive():
 	while True:
 		line = input('$ ')
@@ -582,7 +619,8 @@ def main():
 	# ll_test_1()
 	# ll_test_2()
 	# interactive()
-	tests()
+	quote_validation_tests()
+	parser_tests()
 
 
 if __name__ == '__main__':
