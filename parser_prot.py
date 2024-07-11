@@ -58,21 +58,53 @@ def validate_quotes(line):
 
 
 def detect_expansions(line):
-	vars_to_expand = []
+	def is_digit(c):
+		return c >= '0' and c <= '9'
+	def is_valid_var_char(c):
+		return (c == '_' 
+			or (c >= 'a' and c <= 'z')
+			or (c >= 'A' and c <= 'Z')
+			or (c >= '0' and c <= '9'))
+
+	vars_idxs_to_expand = []
 	var_idx = 0
 	is_in_single_quote = False
-	for c in line:
-		if c == "'":
+	s = 0
+	while s < len(line):
+		if line[s] == "'":
+			# update the state of being inside a single quote or not
 			is_in_single_quote = not is_in_single_quote
-		elif not is_in_single_quote and c == '$':
-			# inspect if this is a variable and will be expanded
-			#
-			# mind var rules, $$, $4, $hi$there, $?, etc...
-			will_expanded = None
-			if will_expanded:
-				vars_to_expand.append(var_idx)
-			var_idx
-	return vars_to_expand
+		elif line[s] == '$':
+			# we are at $
+			if not is_in_single_quote:
+				# we are at a $ that is eligible for expansion
+				
+				# if next is numeric, skip
+				if s + 1 < len(line) and is_digit(line[s + 1]):
+					s += 2
+					var_idx += 1
+					continue
+				# find e
+				e = s + 1
+				while e < len(line) and is_valid_var_char(line[e]):
+					e += 1
+				# if $$, we will expand
+				if e == s + 1:
+					if line[e] == '$':
+						vars_idxs_to_expand.append(var_idx) # append first $
+						var_idx += 2 # increase index for both of them
+						s += 2
+						continue
+				else:
+					vars_idxs_to_expand.append(var_idx)
+				# skip iter var
+				s = e
+				var_idx += 1
+				continue
+			# update the idx for $
+			var_idx += 1
+		s += 1
+	return vars_idxs_to_expand
 
 
 def parse(line):
@@ -625,6 +657,35 @@ def quote_validation_tests():
 	else:
 		print(f'\nFailed {failed_count} tests.')
 
+
+def expansion_detection_tests():
+	print('Running expansion detection tests...')
+
+	expansion_detection_tests = [
+		['$2$ ', []],
+		['$2$ $a x', [2]],
+		['a$$b', [0]],
+		['a$b$c123$$$$$a$2$ x', [0, 1, 2, 4, 6]],
+	]
+
+	failed_count = 0
+	test_count = 0
+	for i, test in enumerate(expansion_detection_tests):
+		test_count += 1
+		# print(f'i={i} test case = {test[0]}')
+		actual = detect_expansions(test[0])
+		expected = test[1]
+		if actual != expected:
+			failed_count += 1
+			print(f'\nFailed test {i + 1}')
+			print(f'Test case = {test[0]}')
+			print(f'Actual    = {actual}')
+			print(f'Expected  = {expected}')
+	if failed_count == 0:
+		print(f'OK ({test_count})')
+	else:
+		print(f'\nFailed {failed_count} tests.')
+
 	
 def interactive():
 	while True:
@@ -642,6 +703,7 @@ def main():
 	# interactive()
 	quote_validation_tests()
 	parser_tests()
+	expansion_detection_tests()
 
 
 if __name__ == '__main__':
