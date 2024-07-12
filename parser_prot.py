@@ -60,31 +60,38 @@ def validate_quotes(line):
 def detect_expansions(line):
 	def is_digit(c):
 		return c >= '0' and c <= '9'
+	
 	def is_valid_var_char(c):
 		return (c == '_' 
 			or (c >= 'a' and c <= 'z')
 			or (c >= 'A' and c <= 'Z')
 			or (c >= '0' and c <= '9'))
+	
+	def is_eligible_for_expansion(line, s, is_in_single_quote, var_idx):
+		if line[s] == "'":
+			is_in_single_quote = not is_in_single_quote
+			s += 1
+			return False, s, is_in_single_quote, var_idx
+		if line[s] != '$':
+			s += 1
+			return False, s, is_in_single_quote, var_idx
+		if is_in_single_quote:
+			var_idx += 1
+			s += 1
+			return False, s, is_in_single_quote, var_idx
+		if s + 1 < len(line) and is_digit(line[s + 1]):
+			s += 2
+			var_idx += 1
+			return False, s, is_in_single_quote, var_idx
+		return True, s, is_in_single_quote, var_idx
 
 	vars_idxs_to_expand = []
 	var_idx = 0
 	is_in_single_quote = False
 	s = 0
 	while s < len(line):
-		if line[s] == "'":
-			is_in_single_quote = not is_in_single_quote
-			s += 1
-			continue
-		if line[s] != '$':
-			s += 1
-			continue
-		if is_in_single_quote:
-			var_idx += 1
-			s += 1
-			continue
-		if s + 1 < len(line) and is_digit(line[s + 1]):
-			s += 2
-			var_idx += 1
+		is_eligible, s, is_in_single_quote, var_idx = is_eligible_for_expansion(line, s, is_in_single_quote, var_idx)
+		if not is_eligible:
 			continue
 		e = s + 1
 		while e < len(line) and is_valid_var_char(line[e]):
