@@ -57,16 +57,18 @@ def validate_quotes(line):
 	return quote_type is None
 
 
+def is_digit(c):
+	return c >= '0' and c <= '9'
+
+
+def is_valid_var_expansion_char(c):
+	return (c == '_' 
+		or (c >= 'a' and c <= 'z')
+		or (c >= 'A' and c <= 'Z')
+		or (c >= '0' and c <= '9'))
+
+
 def detect_expansions(line):
-	def is_digit(c):
-		return c >= '0' and c <= '9'
-	
-	def is_valid_var_char(c):
-		return (c == '_' 
-			or (c >= 'a' and c <= 'z')
-			or (c >= 'A' and c <= 'Z')
-			or (c >= '0' and c <= '9'))
-	
 	def is_eligible_for_expansion(line, s, is_in_single_quote, var_idx):
 		if line[s] == "'":
 			is_in_single_quote = not is_in_single_quote
@@ -94,7 +96,7 @@ def detect_expansions(line):
 		if not is_eligible:
 			continue
 		e = s + 1
-		while e < len(line) and is_valid_var_char(line[e]):
+		while e < len(line) and is_valid_var_expansion_char(line[e]):
 			e += 1
 		if e != s + 1:
 			vars_idxs_to_expand.append(var_idx)
@@ -108,7 +110,7 @@ def detect_expansions(line):
 	return vars_idxs_to_expand
 
 
-def parse(line):
+def tokenize(line):
 	def get_idx_of_next(s, search_start_idx, search_char):
 		'''
 		Search `search_char` in `s` starting from index `search_start_idx`.
@@ -183,9 +185,6 @@ def parse(line):
 			return True, line, i, curr_token_val, head
 		return False, line, i, curr_token_val, head
 
-	if not validate_quotes(line):
-		print('SyntaxError: unclosed quotes')
-		return
 	head = None
 	i = 0
 	curr_token_val = ''
@@ -234,8 +233,69 @@ def parse(line):
 	return head
 
 
-def parser_tests():
-	print('Running parser tests...')
+def check_token_rules(token_list: Token):
+	iter = token_list
+	while iter is not None:
+		if iter.type == TokenType.PIPE:
+			if (iter.prev is None) or (iter.next != TokenType.STRING) or (iter.next is None):
+				return False
+		elif iter.type == TokenType.APPEND_TO:
+			if (iter.next is None) or (iter.next != TokenType.STRING):
+				return False
+		elif iter.type == TokenType.REDIR_TO:
+			if (iter.next is None) or (iter.next != TokenType.STRING):
+				return False
+		elif iter.type == TokenType.HERE_DOC:
+			if (iter.next is None) or (iter.next != TokenType.STRING):
+				return False
+		elif iter.type == TokenType.REDIR_FROM:
+			if (iter.next is None) or (iter.next != TokenType.STRING):
+				return False
+		iter = iter.next
+
+
+def expand(token_list: Token, var_idxs_to_expand):
+	def expand_replace(var_name):
+		return 'i_am_' + var_name
+
+	var_idx = 0
+	idx_idx = 0
+	iter = token_list
+	while iter is not None:
+		if iter.type == TokenType.STRING:
+			i = 0
+			while i < len(iter.val):
+				if iter.val[i] == '$':
+					if var_idx == var_idxs_to_expand[idx_idx]:
+						e = i + 1
+						while e < len(iter.val) and is_valid_var_expansion_char(iter.val[e]):
+							e += 1
+						# can put in a function, replaces idx i to e of old string section with a new one
+						new_val = iter.val[:i + 1]
+						new_val += expand_replace(iter.val[i:e])
+						new_val += iter.val[e:]
+						iter.val = new_val
+						idx_idx += 1
+					var_idx += 1
+				i += 1
+		iter = iter.next
+
+
+def parse(line):
+	if not validate_quotes(line):
+		print('SyntaxError: unclosed quotes')
+		return
+	var_idxs_to_expand = detect_expansions(line)
+	token_list = tokenize(line)
+	if not check_token_rules(token_list):
+		print('SyntaxError: invalid tokens')
+		return
+	expanded_token_list = expand(token_list, var_idxs_to_expand)
+	return expanded_token_list
+
+
+def tokenizer_tests():
+	print('Running tokenizer tests...')
 
 	def is_ll_equal_list(head: Token, token_list):
 		i = 0
@@ -586,7 +646,7 @@ def parser_tests():
 	for i, test in enumerate(tests):
 		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
-		actual_ll_head = parse(test[0])
+		actual_ll_head = tokenize(test[0])
 		expected_list = test[1]
 		is_equal = is_ll_equal_list(actual_ll_head, expected_list)
 		if is_equal != 1:
@@ -695,7 +755,7 @@ def interactive():
 		if not validate_quotes(line):
 			print('Invalid input: unclosed quotes')
 		else:
-			tokens = parse(line)
+			tokens = tokenize(line)
 			print_ll(tokens)
 
 
@@ -704,7 +764,7 @@ def main():
 	# ll_test_2()
 	# interactive()
 	quote_validation_tests()
-	parser_tests()
+	tokenizer_tests()
 	expansion_detection_tests()
 
 
