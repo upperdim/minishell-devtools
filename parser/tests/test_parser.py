@@ -7,8 +7,6 @@ from parser import  validate_quotes
 
 
 def quote_validation_tests():
-	print('Running quote validation tests...')
-
 	quote_val_tests = [
 		['', True],
 		['\'', False],
@@ -20,6 +18,8 @@ def quote_validation_tests():
 		[' " \' " ', True],
 		[' " \' " \' " ', False],
 	]
+
+	print(f'Running {len(quote_val_tests)} quote validation tests...')
 
 	failed_count = 0
 	test_count = 0

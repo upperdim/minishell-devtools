@@ -8,8 +8,6 @@ from linked_list import  print_ll
 
 
 def tokenizer_tests():
-	print('Running tokenizer tests...')
-
 	def is_ll_equal_list(head: Token, token_list):
 		i = 0
 		iter = head
@@ -352,6 +350,8 @@ def tokenizer_tests():
 		# ],
 	]
 	
+	print(f'Running {len(tests)} tokenizer tests...')
+
 	failed_count = 0
 	test_count = 0
 	for i, test in enumerate(tests):

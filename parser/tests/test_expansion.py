@@ -7,8 +7,6 @@ from expansion import detect_expansions
 
 
 def expansion_detection_tests():
-	print('Running expansion detection tests...')
-
 	expansion_detection_tests = [
 		['$2$ ', []],
 		['$2$ $a x', [2]],
@@ -16,6 +14,8 @@ def expansion_detection_tests():
 		['a$b$c123$$$$$a$2$ x', [0, 1, 2, 4, 6]],
 		["a$$b \" a$$b \" a$$b ' a$$b ' a$$b", [0, 2, 4, 8]],
 	]
+
+	print(f'Running {len(expansion_detection_tests)} expansion detection tests...')
 
 	failed_count = 0
 	test_count = 0
