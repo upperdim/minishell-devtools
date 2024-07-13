@@ -1,4 +1,9 @@
-from parser import validate_quotes
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+from parser import  validate_quotes
 
 
 def quote_validation_tests():

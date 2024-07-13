@@ -1,5 +1,10 @@
-from tokenizer import TokenType, Token, tokenize
-from linked_list import print_ll
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+from tokenizer import  TokenType, Token, tokenize
+from linked_list import  print_ll
 
 
 def tokenizer_tests():
