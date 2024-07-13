@@ -76,17 +76,15 @@ def expand(token_list: Token, var_idxs_to_expand):
 			continue
 		i = 0
 		while i < len(iter.val):
-			if iter.val[i] != '$':
-				i += 1
-				continue
-			if len(var_idxs_to_expand) > idx_idx and var_idx == var_idxs_to_expand[idx_idx]:
-				e = i + 1
-				while e < len(iter.val) and is_valid_var_expansion_char(iter.val[e]):
-					e += 1
-				var_name = iter.val[i + 1:e]
-				iter.val = str_replace_section(iter.val, i, e, get_var_value(var_name))
-				idx_idx += 1
-			var_idx += 1
+			if iter.val[i] == '$':
+				if len(var_idxs_to_expand) > idx_idx and var_idx == var_idxs_to_expand[idx_idx]:
+					e = i + 1
+					while e < len(iter.val) and is_valid_var_expansion_char(iter.val[e]):
+						e += 1
+					var_name = iter.val[i + 1:e]
+					iter.val = str_replace_section(iter.val, i, e, get_var_value(var_name))
+					idx_idx += 1
+				var_idx += 1
 			i += 1
 		iter = iter.next
 	return token_list
