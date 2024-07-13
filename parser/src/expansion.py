@@ -55,28 +55,38 @@ def detect_expansions(line):
 
 
 def expand(token_list: Token, var_idxs_to_expand):
-	def expand_replace(var_name):
+	def get_var_value(var_name):
+		'''Gets variable value from environment in order to expand'''
 		return 'i_am_' + var_name
+	
+	def str_replace_section(s, start_idx, end_idx, replace_with):
+		'''Replace string `s` from `start_idx` to `end_idx` inclusive with `replace_with`'''
+		new = ''
+		new += s[:start_idx]
+		new += replace_with
+		new += s[end_idx:]
+		return new
 
 	var_idx = 0
 	idx_idx = 0
 	iter = token_list
 	while iter is not None:
-		if iter.type == TokenType.STRING:
-			i = 0
-			while i < len(iter.val):
-				if iter.val[i] == '$':
-					if len(var_idxs_to_expand) > idx_idx and var_idx == var_idxs_to_expand[idx_idx]:
-						e = i + 1
-						while e < len(iter.val) and is_valid_var_expansion_char(iter.val[e]):
-							e += 1
-						# can put in a function, replaces idx i to e of old string section with a new one
-						new_val = iter.val[:i]
-						new_val += expand_replace(iter.val[i + 1:e])
-						new_val += iter.val[e:]
-						iter.val = new_val
-						idx_idx += 1
-					var_idx += 1
+		if iter.type != TokenType.STRING:
+			iter = iter.next
+			continue
+		i = 0
+		while i < len(iter.val):
+			if iter.val[i] != '$':
 				i += 1
+				continue
+			if len(var_idxs_to_expand) > idx_idx and var_idx == var_idxs_to_expand[idx_idx]:
+				e = i + 1
+				while e < len(iter.val) and is_valid_var_expansion_char(iter.val[e]):
+					e += 1
+				var_name = iter.val[i + 1:e]
+				iter.val = str_replace_section(iter.val, i, e, get_var_value(var_name))
+				idx_idx += 1
+			var_idx += 1
+			i += 1
 		iter = iter.next
 	return token_list
