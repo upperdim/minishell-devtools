@@ -3,26 +3,28 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from expansion import detect_expansions
+from expansion_tilda import detect_tilda_expansions
 
 
-def expansion_detection_tests():
-	expansion_detection_tests = [
-		['$2$ ', []],
-		['$2$ $a x', [2]],
-		['a$$b', [0]],
-		['a$b$c123$$$$$a$2$ x', [0, 1, 2, 4, 6]],
-		["a$$b \" a$$b \" a$$b ' a$$b ' a$$b", [0, 2, 4, 8]],
+def tilda_expansion_detection_tests():
+	tilda_expansion_detection_tests = [
+		['~ ', [0]],
+		[' " ~ " ', []],
+		[" ' ~ ' ", []],
+		[' a~ ', []],
+		[" ~a ", []],
+		[" ~/ ", [0]],
+		[" ~/a ", [0]],
 	]
 
-	print(f'Running {len(expansion_detection_tests)} expansion detection tests...')
+	print(f'Running {len(tilda_expansion_detection_tests)} tilda expansion detection tests...')
 
 	failed_count = 0
 	test_count = 0
-	for i, test in enumerate(expansion_detection_tests):
+	for i, test in enumerate(tilda_expansion_detection_tests):
 		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
-		actual = detect_expansions(test[0])
+		actual = detect_tilda_expansions(test[0])
 		expected = test[1]
 		if actual != expected:
 			failed_count += 1

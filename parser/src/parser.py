@@ -1,4 +1,5 @@
-from expansion import detect_expansions, expand
+from expansion_var import detect_var_expansions, expand_var
+from expansion_tilda import detect_tilda_expansions, expand_tilda
 from tokenizer import tokenize
 from tokenizer import TokenType, Token
 from linked_list import print_ll
@@ -41,13 +42,15 @@ def parse(line):
 	if not validate_quotes(line):
 		print('SyntaxError: unclosed quotes')
 		return
-	var_idxs_to_expand = detect_expansions(line)
+	tilda_idxs_to_expand = detect_tilda_expansions(line)
+	var_idxs_to_expand = detect_var_expansions(line)
 	token_list = tokenize(line)
 	if not check_token_rules(token_list):
 		print('SyntaxError: invalid tokens')
 		return
-	expanded_token_list = expand(token_list, var_idxs_to_expand)
-	return expanded_token_list
+	token_list = expand_tilda(token_list, tilda_idxs_to_expand)
+	token_list = expand_var(token_list, var_idxs_to_expand)
+	return token_list
 
 	
 def interactive():

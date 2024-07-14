@@ -12,7 +12,7 @@ def is_valid_var_expansion_char(c):
 		or (c >= '0' and c <= '9'))
 
 
-def detect_expansions(line):
+def detect_var_expansions(line):
 	def is_eligible_for_expansion(line, s, is_in_single_quote, var_idx):
 		if line[s] == "'":
 			is_in_single_quote = not is_in_single_quote
@@ -54,7 +54,7 @@ def detect_expansions(line):
 	return vars_idxs_to_expand
 
 
-def expand(token_list: Token, var_idxs_to_expand):
+def expand_var(token_list: Token, var_idxs_to_expand):
 	def get_var_value(var_name):
 		'''Gets variable value from environment in order to expand'''
 		return 'i_am_' + var_name
