@@ -18,9 +18,7 @@ def var_expansion_detection_tests():
 	print(f'Running {len(var_expansion_detection_tests)} variable expansion detection tests...')
 
 	failed_count = 0
-	test_count = 0
 	for i, test in enumerate(var_expansion_detection_tests):
-		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
 		actual = detect_var_expansions(test[0])
 		expected = test[1]
@@ -31,6 +29,6 @@ def var_expansion_detection_tests():
 			print(f'Actual    = {actual}')
 			print(f'Expected  = {expected}')
 	if failed_count == 0:
-		print(f'OK ({test_count})')
+		print(f'OK')
 	else:
 		print(f'\nFailed {failed_count} tests.')

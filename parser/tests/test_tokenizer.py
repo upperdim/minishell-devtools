@@ -353,9 +353,7 @@ def tokenizer_tests():
 	print(f'Running {len(tests)} tokenizer tests...')
 
 	failed_count = 0
-	test_count = 0
 	for i, test in enumerate(tests):
-		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
 		actual_ll_head = tokenize(test[0])
 		expected_list = test[1]
@@ -370,6 +368,6 @@ def tokenizer_tests():
 			if is_equal == -2:
 				print(f'MISMATCHING TOKEN LIST SIZES')
 	if failed_count == 0:
-		print(f'OK ({test_count})')
+		print(f'OK')
 	else:
 		print(f'\nFailed {failed_count} tests.')

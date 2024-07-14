@@ -22,9 +22,7 @@ def quote_validation_tests():
 	print(f'Running {len(quote_val_tests)} quote validation tests...')
 
 	failed_count = 0
-	test_count = 0
 	for i, test in enumerate(quote_val_tests):
-		test_count += 1
 		# print(f'i={i} test case = {test[0]}')
 		actual = validate_quotes(test[0])
 		expected = test[1]
@@ -35,6 +33,6 @@ def quote_validation_tests():
 			print(f'Actual    = {actual}')
 			print(f'Expected  = {expected}')
 	if failed_count == 0:
-		print(f'OK ({test_count})')
+		print(f'OK')
 	else:
 		print(f'\nFailed {failed_count} tests.')
