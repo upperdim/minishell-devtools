@@ -143,8 +143,7 @@ def tokenize(line):
 					new_type = (TokenType.HERE_DOC if redirection_type == '<' else TokenType.APPEND_TO)
 					head = add_token(head, Token(new_type, new_val, None, None))
 					curr_token_val = ''
-					i += 3
-					continue
+					i += 2
 				else:
 					# > or < w/ number
 					new_val = curr_token_val + redirection_type
