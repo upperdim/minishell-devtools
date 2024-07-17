@@ -57,6 +57,10 @@ def interactive():
 	while True:
 		line = input('$ ')
 		tokens = parse(line)
+		if not check_token_rules(tokens):
+			print('=====================')
+			print('ERROR! INVALID TOKENS')
+			print('=====================')
 		print_ll(tokens)
 
 
