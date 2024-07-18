@@ -10,6 +10,7 @@ def var_expansion_detection_tests():
 	var_expansion_detection_tests = [
 		['$2$ ', []],
 		['$2$ $a x', [2]],
+		['  $?  ', [0]],
 		['a$$b', [0]],
 		['a$b$c123$$$$$a$2$ x', [0, 1, 2, 4, 6]],
 		["a$$b \" a$$b \" a$$b ' a$$b ' a$$b", [0, 2, 4, 8]],

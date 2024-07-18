@@ -39,6 +39,10 @@ def detect_var_expansions(line):
 		is_eligible, s, is_in_single_quote, var_idx = is_eligible_for_expansion(line, s, is_in_single_quote, var_idx)
 		if not is_eligible:
 			continue
+		if s + 1 < len(line) and line[s + 1] == '?':
+			vars_idxs_to_expand.append(var_idx)
+			s += 1
+			continue
 		e = s + 1
 		while e < len(line) and is_valid_var_expansion_char(line[e]):
 			e += 1
