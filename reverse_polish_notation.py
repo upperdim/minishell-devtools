@@ -129,7 +129,7 @@ class RPN:
 
 def	main():
 	infix_expressions = [
-		"1 + 2 * 4 - 3",
+		"10 + 2 * 4 - 3",
 		"1 + 2 * ( 4 - 3 )",
 		"( 1 + 2 ) * 4 - 3",
 		"1 + 2 * ( 2 ^ ( 2 + 1 ) - 5 )",
@@ -144,7 +144,8 @@ def	main():
 	rpn_expressions = [
 		"8 9 * 9 - 9 - 9 - 4 - 1 +",
 		"7 7 * 7 -",
-		"1 2 * 2 / 2 * 2 4 - +"
+		"1 2 * 2 / 2 * 2 4 - +",
+		"10 2 4 * + 3 -"
 	]
 
 	for rpn_expr in rpn_expressions:
