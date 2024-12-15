@@ -9,6 +9,7 @@ class RPN:
 	class TokenType(Enum):
 		OPERATOR = 1
 		NUMBER = 2
+		SPACE = 3
 
 	class Token:
 		def __init__(self, type, value):
@@ -50,10 +51,13 @@ class RPN:
 					value += int(expr[RPN._lex_cursor_pos])
 					RPN._lex_cursor_pos += 1
 				return RPN.Token(RPN.TokenType.NUMBER, value)
+			elif expr[RPN._lex_cursor_pos] == ' ':
+				RPN._lex_cursor_pos += 1
+				return RPN.Token(RPN.TokenType.SPACE, ' ')
 			else:
 				raise Exception("lex(): Invalid character in expr")
 
-	def _convert(infix_expr):
+	def _convert_to_rpn_tokens(infix_expr):
 		"""create a stack of tokens in reverse polish notation form"""
 		output_stack = []
 		holding_stack = []
@@ -75,22 +79,23 @@ class RPN:
 					while len(holding_stack) > 0 and RPN._op_presedences[token.value] < RPN._op_presedences[holding_stack[-1].value]:
 						output_stack.append(holding_stack.pop())
 					holding_stack.append(token)
+			elif token.type == RPN.TokenType.SPACE:
+				pass
 			token = RPN._lex(infix_expr)
 		while len(holding_stack) > 0:
 			output_stack.append(holding_stack.pop())
 		return output_stack
 	
 	def convert(infix_expr):
-		"""convert infix expression into reverse polish notation and print it"""
-		rpn_tokens = RPN._convert(infix_expr)
+		"""convert infix expression into reverse polish notation"""
+		rpn_tokens = RPN._convert_to_rpn_tokens(infix_expr)
 		result = ""
 		for token in rpn_tokens:
 			result += str(token.value)
+			result += ' '
 		return result
 
-	def solve(infix_expr):
-		"""solve an infix expression"""
-		rpn_tokens = RPN._convert(infix_expr)
+	def _solve_from_rpn_tokens(rpn_tokens):
 		solve_stack = []
 		while len(rpn_tokens) > 0:
 			elem = rpn_tokens.pop(0)
@@ -102,21 +107,49 @@ class RPN:
 				solve_stack.append(RPN._do_operation(operand1, elem, operand2))
 		return solve_stack[0].value
 
+	def solve_infix(infix_expr):
+		"""solve an infix expression"""
+		rpn_tokens = RPN._convert_to_rpn_tokens(infix_expr)
+		return RPN._solve_from_rpn_tokens(rpn_tokens)
+
+	def _tokenize_rpn(rpn_expr):
+		tokens = []
+		RPN._lex_cursor_pos = 0
+		token = RPN._lex(rpn_expr)
+		while token is not None:
+			tokens.append(token)
+			token = RPN._lex(rpn_expr)
+		return tokens
+
+	def solve_rpn(rpn_expr):
+		"""solve a reverse polish notation expression"""
+		rpn_tokens = RPN._tokenize_rpn(rpn_expr)
+		return RPN._solve_from_rpn_tokens(rpn_tokens)
+
 
 def	main():
 	infix_expressions = [
-		"1+2*4-3",
-		"1+2*(4-3)",
-		"(1+2)*4-3",
-		"1+2*(2^(2+1)-5)",
-		"1+2*(2^2^2-5)",
+		"1 + 2 * 4 - 3",
+		"1 + 2 * ( 4 - 3 )",
+		"( 1 + 2 ) * 4 - 3",
+		"1 + 2 * ( 2 ^ ( 2 + 1 ) - 5 )",
+		"1 + 2 * ( 2 ^ 2 ^ 2 - 5 )",
 	]
 
 	for infix_expr in infix_expressions:
 		print(f'Infix expression        = {infix_expr}')
-		print(f'Reverse Polist Notation = {RPN.convert(infix_expr)}')
-		print(f'Solution                = {RPN.solve(infix_expr)}\n')
+		print(f'Reverse Polish Notation = {RPN.convert(infix_expr)}')
+		print(f'Solution                = {RPN.solve_infix(infix_expr)}\n')
 
+	rpn_expressions = [
+		"8 9 * 9 - 9 - 9 - 4 - 1 +",
+		"7 7 * 7 -",
+		"1 2 * 2 / 2 * 2 4 - +"
+	]
+
+	for rpn_expr in rpn_expressions:
+		print(f'Reverse Polish Notation = {rpn_expr}')
+		print(f'Solution                = {RPN.solve_rpn(rpn_expr)}\n')
 
 if __name__ == '__main__':
 	main()
